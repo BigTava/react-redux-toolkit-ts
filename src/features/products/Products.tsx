@@ -10,7 +10,6 @@ export function Products() {
 
   React.useEffect(() => {
     getProducts().then((products) => {
-      console.log(products);
       dispatch(receivedProducts(products));
     });
   }, []);
