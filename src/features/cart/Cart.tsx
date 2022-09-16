@@ -1,16 +1,38 @@
 import React from "react";
-import { useAppSelector } from "../../app/hooks";
-import { getTotalPrice } from "./cartSlice";
+import classNames from "classnames";
+import { useAppSelector, useAppDispatch } from "../../app/hooks";
+import { getTotalPrice, removeFromCart, updateQuantity } from "./cartSlice";
 import styles from "./Cart.module.css";
 
 export function Cart() {
+  const dispatch = useAppDispatch();
   const products = useAppSelector((state) => state.products.products);
   const items = useAppSelector((state) => state.cart.items);
   const totalPrice = useAppSelector(getTotalPrice);
+  const checkoutState = useAppSelector((state) => state.cart.checkoutState);
+
+  function onQuantityChanged(
+    e: React.FocusEvent<HTMLInputElement>,
+    id: string
+  ) {
+    const quantity = Number(e.target.value) || 0;
+    dispatch(updateQuantity({ id, quantity }));
+  }
+
+  function onCheckout(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    dispatch({ type: "cart/checkout/pending" });
+  }
+  const tableClasses = classNames({
+    [styles.table]: true,
+    [styles.checkoutError]: checkoutState === "ERROR",
+    [styles.checkoutLoading]: checkoutState === "LOADING",
+  });
+
   return (
     <main className="page">
       <h1>Shopping Cart</h1>
-      <table className={styles.table}>
+      <table className={tableClasses}>
         <thead>
           <tr>
             <th>Product</th>
@@ -28,11 +50,15 @@ export function Cart() {
                   type="text"
                   className={styles.input}
                   defaultValue={quantity}
+                  onBlur={(e) => onQuantityChanged(e, id)}
                 />
               </td>
               <td>${products[id].price}</td>
               <td>
-                <button aria-label="Remove Magnifying Glass from Shopping Cart">
+                <button
+                  aria-label="Remove Magnifying Glass from Shopping Cart"
+                  onClick={() => dispatch(removeFromCart(id))}
+                >
                   X
                 </button>
               </td>
@@ -48,7 +74,7 @@ export function Cart() {
           </tr>
         </tfoot>
       </table>
-      <form>
+      <form onSubmit={onCheckout}>
         <button className={styles.button} type="submit">
           Checkout
         </button>
